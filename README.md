@@ -10,7 +10,7 @@ The DAG is this repo demonstrates a use case in which an analyst needs to blend 
 
 **Airflow Version**
 
-   `2.1.1`
+   `2.1.0`
 
 **Providers**
 
