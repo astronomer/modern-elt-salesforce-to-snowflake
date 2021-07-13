@@ -5,7 +5,6 @@ from include.operators.salesforce_to_s3 import SalesforceToS3Operator
 from airflow.models import DAG
 from airflow.models.baseoperator import chain
 from airflow.providers.amazon.aws.operators.s3_copy_object import S3CopyObjectOperator
-from airflow.providers.amazon.aws.operators.s3_delete_objects import S3DeleteObjectsOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 
