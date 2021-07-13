@@ -75,19 +75,11 @@ with DAG(
         aws_conn_id=AWS_CONN_ID,
     )
 
-    delete_data_from_s3_landing = S3DeleteObjectsOperator(
-        task_id="delete_data_from_s3_landing",
-        bucket=DATA_LAKE_LANDING_BUCKET,
-        keys=f"{SALESFORCE_S3_BASE_PATH}/{SALESFORCE_FILE_NAME}",
-        aws_conn_id=AWS_CONN_ID,
-    )
-
     chain(
         upload_salesforce_data_to_s3_landing,
         truncate_snowflake_stage_tables,
         copy_from_s3_to_snowflake,
         store_to_s3_data_lake,
-        delete_data_from_s3_landing,
     )
 
     chain(copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables)
