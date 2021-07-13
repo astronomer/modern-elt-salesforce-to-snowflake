@@ -69,7 +69,7 @@ class SalesforceToS3Operator(BaseOperator):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.query = query.replace("\n", "")
+        self.query = query
         self.s3_bucket_name = s3_bucket_name
         self.s3_key = s3_key
         self.salesforce_conn_id = salesforce_conn_id
