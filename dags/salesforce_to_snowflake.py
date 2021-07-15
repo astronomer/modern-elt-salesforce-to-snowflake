@@ -5,6 +5,7 @@ from include.operators.salesforce_to_s3 import SalesforceToS3Operator
 from airflow.models import DAG
 from airflow.models.baseoperator import chain
 from airflow.providers.amazon.aws.operators.s3_copy_object import S3CopyObjectOperator
+from airflow.providers.amazon.aws.operators.s3_delete_objects import S3DeleteObjectsOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 
@@ -22,7 +23,7 @@ SNOWFLAKE_CONN_ID = "snowflake"
 with DAG(
     dag_id="modern_elt",
     start_date=datetime(2021, 6, 29),
-    schedule_interval="@once",
+    schedule_interval="@daily",
     catchup=False,
     default_args={"retries": 1},
     template_searchpath="include/sql",
@@ -63,7 +64,7 @@ with DAG(
     refresh_reporting_tables = SnowflakeOperator(
         task_id="refresh_reporting_tables",
         sql="snowflake/reporting/build_registry_reporting.sql",
-        snowflake_conn_id=SNOWFLAKE_CONN_ID
+        snowflake_conn_id=SNOWFLAKE_CONN_ID,
     )
 
     store_to_s3_data_lake = S3CopyObjectOperator(
@@ -74,14 +75,23 @@ with DAG(
         aws_conn_id=AWS_CONN_ID,
     )
 
+    delete_data_from_s3_landing = S3DeleteObjectsOperator(
+        task_id="delete_data_from_s3_landing",
+        bucket=DATA_LAKE_LANDING_BUCKET,
+        keys=f"{SALESFORCE_S3_BASE_PATH}/{SALESFORCE_FILE_NAME}",
+    )
+
     chain(
         upload_salesforce_data_to_s3_landing,
         truncate_snowflake_stage_tables,
         copy_from_s3_to_snowflake,
         store_to_s3_data_lake,
+        delete_data_from_s3_landing,
     )
 
-    chain(copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables)
+    chain(
+        copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables
+    )
 
     # Task dependency created by XComArgs
     #   upload_salesforce_data_to_s3_landing >> store_to_s3_data_lake
