@@ -4,10 +4,12 @@ from include.operators.salesforce_to_s3 import SalesforceToS3Operator
 
 from airflow.models import DAG
 from airflow.models.baseoperator import chain
+from airflow.operators.dummy import DummyOperator
 from airflow.providers.amazon.aws.operators.s3_copy_object import S3CopyObjectOperator
 from airflow.providers.amazon.aws.operators.s3_delete_objects import S3DeleteObjectsOperator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 
 DATA_LAKE_LANDING_BUCKET = "{{ var.json.data_lake_info.data_lake_landing_bucket }}"
@@ -29,6 +31,9 @@ with DAG(
     template_searchpath="include/sql",
     default_view="graph",
 ) as dag:
+    begin = DummyOperator(task_id="begin")
+    end = DummyOperator(task_id="end", trigger_rule=TriggerRule.ALL_DONE)
+
     upload_salesforce_data_to_s3_landing = SalesforceToS3Operator(
         task_id="upload_salesforce_data_to_s3_landing",
         query="salesforce/extract/extract_accounts.sql",
@@ -79,9 +84,11 @@ with DAG(
         task_id="delete_data_from_s3_landing",
         bucket=DATA_LAKE_LANDING_BUCKET,
         keys=f"{SALESFORCE_S3_BASE_PATH}/{SALESFORCE_FILE_NAME}",
+        aws_conn_id=AWS_CONN_ID,
     )
 
     chain(
+        begin,
         upload_salesforce_data_to_s3_landing,
         truncate_snowflake_stage_tables,
         copy_from_s3_to_snowflake,
@@ -92,6 +99,8 @@ with DAG(
     chain(
         copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables
     )
+
+    chain([delete_data_from_s3_landing, refresh_reporting_tables], end)
 
     # Task dependency created by XComArgs
     #   upload_salesforce_data_to_s3_landing >> store_to_s3_data_lake
