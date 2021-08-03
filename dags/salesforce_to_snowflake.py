@@ -1,12 +1,11 @@
 from datetime import datetime
 
-from include.operators.salesforce_to_s3 import SalesforceToS3Operator
-
 from airflow.models import DAG
 from airflow.models.baseoperator import chain
 from airflow.operators.dummy import DummyOperator
 from airflow.providers.amazon.aws.operators.s3_copy_object import S3CopyObjectOperator
 from airflow.providers.amazon.aws.operators.s3_delete_objects import S3DeleteObjectsOperator
+from airflow.providers.amazon.aws.transfers.salesforce_to_s3 import SalesforceToS3Operator
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.utils.trigger_rule import TriggerRule
@@ -36,7 +35,7 @@ with DAG(
 
     upload_salesforce_data_to_s3_landing = SalesforceToS3Operator(
         task_id="upload_salesforce_data_to_s3_landing",
-        query="salesforce/extract/extract_accounts.sql",
+        salesforce_query="salesforce/extract/extract_accounts.sql",
         s3_bucket_name=DATA_LAKE_LANDING_BUCKET,
         s3_key=f"{SALESFORCE_S3_BASE_PATH}/{SALESFORCE_FILE_NAME}",
         salesforce_conn_id="salesforce",
@@ -96,9 +95,7 @@ with DAG(
         delete_data_from_s3_landing,
     )
 
-    chain(
-        copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables
-    )
+    chain(copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables)
 
     chain([delete_data_from_s3_landing, refresh_reporting_tables], end)
 
