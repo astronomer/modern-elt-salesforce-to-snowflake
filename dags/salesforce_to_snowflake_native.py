@@ -31,8 +31,9 @@ with DAG(
     default_view="graph",
 ) as dag:
     begin = DummyOperator(task_id="begin")
-    end = DummyOperator(task_id="end", trigger_rule=TriggerRule.ALL_DONE)
+    end = DummyOperator(task_id="end")
 
+    # Query Salesforce to extract Account data and store in an S3 data lake landing area.
     upload_salesforce_data_to_s3_landing = SalesforceToS3Operator(
         task_id="upload_salesforce_data_to_s3_landing",
         salesforce_query="salesforce/extract/extract_accounts.sql",
@@ -43,6 +44,15 @@ with DAG(
         replace=True,
     )
 
+    # Truncate stage for Customers (aka Accounts in Salesforce) data in Snowflake prior to load.
+    truncate_snowflake_stage_table = SnowflakeOperator(
+        task_id="truncate_snowflake_stage_table",
+        sql="snowflake/common/truncate_table.sql",
+        params={"table_name": "customers_staging"},
+        snowflake_conn_id=SNOWFLAKE_CONN_ID,
+    )
+
+    # Copy the landed files from S3 to the Snowflake stage table.
     copy_from_s3_to_snowflake = S3ToSnowflakeOperator(
         task_id="copy_from_s3_to_snowflake",
         stage="s3_elt_data_lake_landing",
@@ -52,25 +62,21 @@ with DAG(
         table="customers_staging",
     )
 
-    truncate_snowflake_stage_tables = SnowflakeOperator(
-        task_id="truncate_snowflake_stage_tables",
-        sql="snowflake/common/truncate_table.sql",
-        params={"table_name": "customers_staging"},
-        snowflake_conn_id=SNOWFLAKE_CONN_ID,
-    )
-
+    # Insert into the dimensional Customer table in Snowflake.
     load_snowflake_staging_data = SnowflakeOperator(
         task_id="load_snowflake_staging_data",
         sql="snowflake/staging/load_customers_staging.sql",
         snowflake_conn_id=SNOWFLAKE_CONN_ID,
     )
 
-    refresh_reporting_tables = SnowflakeOperator(
-        task_id="refresh_reporting_tables",
+    # Rebuild website-traffic reporting tables after new Customers are inserted.
+    refresh_reporting_table = SnowflakeOperator(
+        task_id="refresh_reporting_table",
         sql="snowflake/reporting/build_registry_reporting.sql",
         snowflake_conn_id=SNOWFLAKE_CONN_ID,
     )
 
+    # Move the landed Accounts data file from the S3 landing area to the persistent data lake area.
     store_to_s3_data_lake = S3CopyObjectOperator(
         task_id="store_to_s3_data_lake",
         source_bucket_key=upload_salesforce_data_to_s3_landing.output,
@@ -79,6 +85,7 @@ with DAG(
         aws_conn_id=AWS_CONN_ID,
     )
 
+    # Delete the landed Accounts data file after persisting to the data lake
     delete_data_from_s3_landing = S3DeleteObjectsOperator(
         task_id="delete_data_from_s3_landing",
         bucket=DATA_LAKE_LANDING_BUCKET,
@@ -86,18 +93,19 @@ with DAG(
         aws_conn_id=AWS_CONN_ID,
     )
 
+    # Set task dependencies.
     chain(
         begin,
         upload_salesforce_data_to_s3_landing,
-        truncate_snowflake_stage_tables,
+        truncate_snowflake_stage_table,
         copy_from_s3_to_snowflake,
         store_to_s3_data_lake,
         delete_data_from_s3_landing,
     )
 
-    chain(copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_tables)
+    chain(copy_from_s3_to_snowflake, load_snowflake_staging_data, refresh_reporting_table)
 
-    chain([delete_data_from_s3_landing, refresh_reporting_tables], end)
+    chain([delete_data_from_s3_landing, refresh_reporting_table], end)
 
     # Task dependency created by XComArgs
     #   upload_salesforce_data_to_s3_landing >> store_to_s3_data_lake
