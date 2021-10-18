@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from airflow_provider_hightouch.operators.hightouch import HightouchTriggerSyncOperator
+
 from airflow.models import DAG
 from airflow.models.baseoperator import chain
 from airflow.operators.dummy import DummyOperator
@@ -9,7 +11,7 @@ from airflow.providers.amazon.aws.transfers.salesforce_to_s3 import SalesforceTo
 from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.utils.trigger_rule import TriggerRule
-from airflow_provider_hightouch.operators.hightouch import HightouchTriggerSyncOperator
+
 
 
 DATA_LAKE_LANDING_BUCKET = "{{ var.json.data_lake_info.data_lake_landing_bucket }}"
