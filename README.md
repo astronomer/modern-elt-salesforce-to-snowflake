@@ -17,9 +17,11 @@ The DAG is this repo demonstrates a use case in which an analyst needs to blend 
    apache-airflow-providers-http==2.0.1
    apache-airflow-providers-salesforce==3.1.0
    apache-airflow-providers-snowflake==2.0.0
+   airflow-provider-hightouch==2.0.3
    ```
 
 **Connections**
 - Salesforce
 - AWS S3
 - Snowflake
+- Hightouch (when using the reverse ETL DAG)
