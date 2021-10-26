@@ -1,4 +1,3 @@
-@@ -1,123 +0,0 @@
 from datetime import datetime
 
 from airflow_provider_hightouch.operators.hightouch import HightouchTriggerSyncOperator
