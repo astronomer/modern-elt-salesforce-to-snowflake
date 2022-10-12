@@ -1,3 +1,9 @@
+"""
+DAG that showcases modern ELT pattern by moving data from Salesforce into Snowflake. 
+
+After the data is inserted, a report is refreshed with the new data. 
+"""
+
 from datetime import datetime
 
 from airflow.models import DAG

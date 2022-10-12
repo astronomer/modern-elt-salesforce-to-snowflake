@@ -1,3 +1,10 @@
+"""
+DAG that showcases modern reverse ETL with Salesforce data in Snowflake and Hightouch.
+
+Starts by extracting Salesforce data into S3, loads it into a staging area and into Snowflake,
+and then calls a Hightouch sync with that data.
+"""
+
 from datetime import datetime
 
 from airflow_provider_hightouch.operators.hightouch import HightouchTriggerSyncOperator
@@ -32,6 +39,7 @@ with DAG(
     default_args={"retries": 1},
     template_searchpath="include/sql",
     default_view="graph",
+    doc_md=__doc__
 ) as dag:
     begin = DummyOperator(task_id="begin")
     end = DummyOperator(task_id="end")

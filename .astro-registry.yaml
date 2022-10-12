@@ -1,0 +1,8 @@
+# These categories will be applied to all DAGs in the repo.
+categories:
+  - ETL/ELT
+  - Data Processing
+# List of DAGs that should be published to the Astronomer Registry.
+dags:
+  - path: dags/salesforce_to_snowflake_native_hightouch.py
+  - path: dags/salesforce_to_snowflake_native.py
