@@ -1,4 +1,6 @@
 """
+### Reverse ETL with Snowflake, Salesforce, and Hightouch
+
 DAG that showcases modern reverse ETL with Salesforce data in Snowflake and Hightouch.
 
 Starts by extracting Salesforce data into S3, loads it into a staging area and into Snowflake,

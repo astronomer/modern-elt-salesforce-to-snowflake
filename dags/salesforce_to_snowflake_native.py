@@ -1,5 +1,8 @@
 """
+### ELT with Snowflake and Salesforce
+
 DAG that showcases modern ELT pattern by moving data from Salesforce into Snowflake. 
+This DAG uses a custom built Salesforce to S3 operator, not an integration service like Fivetran or Airbyte.
 
 After the data is inserted, a report is refreshed with the new data. 
 """
