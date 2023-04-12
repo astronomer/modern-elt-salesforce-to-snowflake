@@ -17,7 +17,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.providers.amazon.aws.operators.s3 import S3CopyObjectOperator
 from airflow.providers.amazon.aws.operators.s3 import S3DeleteObjectsOperator
 from airflow.providers.amazon.aws.transfers.salesforce_to_s3 import SalesforceToS3Operator
-from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.providers.o.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -61,7 +61,7 @@ with DAG(
     truncate_snowflake_stage_table = SnowflakeOperator(
         task_id="truncate_snowflake_stage_table",
         sql="snowflake/common/truncate_table.sql",
-        params={"table_name": "customers_staging"},
+        parameters={"table_name": "customers_staging"},
         snowflake_conn_id=SNOWFLAKE_CONN_ID,
     )
 
@@ -110,7 +110,7 @@ with DAG(
     sync_data_to_salesforce = HightouchTriggerSyncOperator(
         task_id="sync_data_to_salesforce",
         connection_id="hightouch",
-        sync_id=42,
+        sync_id="42",
         synchronous=True,
     )
 
