@@ -17,7 +17,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.providers.amazon.aws.operators.s3 import S3CopyObjectOperator
 from airflow.providers.amazon.aws.operators.s3 import S3DeleteObjectsOperator
 from airflow.providers.amazon.aws.transfers.salesforce_to_s3 import SalesforceToS3Operator
-from airflow.providers.o.operators.snowflake import SnowflakeOperator
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
 from airflow.providers.snowflake.transfers.s3_to_snowflake import S3ToSnowflakeOperator
 from airflow.utils.trigger_rule import TriggerRule
 
